@@ -17,18 +17,20 @@ from handlers.form import router as form_router
 logging.basicConfig(level=logging.INFO)
 
 
-# Render portyn ashıw ushın ápiwayı web-server
+# Render portı ushın ápiwayı HTTP handler
 async def handle(request):
-    return web.Response(text="Bot is running successfully!")
+    return web.Response(text="Bot runs 24/7 successfully!")
 
 
-async def start_web_server():
+async def run_web_server():
+    """Render port-scan talabın qanıqtırıw ushın web-server"""
     app = web.Application()
     app.router.add_get("/", handle)
+    app.router.add_get("/health", handle)
+    
     runner = web.AppRunner(app)
     await runner.setup()
     
-    # Render avtomat beretuǵın PORT oqıp alınadı
     port = int(os.environ.get("PORT", 10000))
     site = web.TCPSite(runner, "0.0.0.0", port)
     await site.start()
@@ -36,23 +38,21 @@ async def start_web_server():
 
 
 async def set_bot_commands(bot: Bot):
+    """Bot buyruqların ornatıw"""
     commands = [
         BotCommand(command="start", description="🔄 Bottı iske túsiriw"),
     ]
     try:
         await bot.set_my_commands(commands)
     except Exception as e:
-        print(f"⚠️ Buyruqlardı ornatıwda qátelik ketti: {e}")
+        print(f"⚠️ Buyruqlardı ornatıwda qátelik: {e}")
 
 
-async def main():
+async def run_bot():
+    """Telegram bottı iske túsiriw"""
     if not BOT_TOKEN:
         raise ValueError("BOT_TOKEN tabılmadı! config.py faylın tekseriń.")
 
-    # 1. Render portın ashıw ushın web serverdi start etemiz
-    await start_web_server()
-
-    # 2. Bot session hám dispatcher
     session = AiohttpSession(timeout=60)
 
     bot = Bot(
@@ -73,9 +73,17 @@ async def main():
     try:
         await bot.delete_webhook(drop_pending_updates=True)
     except TelegramNetworkError:
-        print("⚠️ Telegram serverine ulanıwda wazıypa úzildi, kútilip atır...")
+        print("⚠️ Telegram serverine ulanıwda keshigiw bar, kútilip atır...")
 
     await dp.start_polling(bot)
+
+
+async def main():
+    # Web server hám bot polling di bir waqıtta parallel run ettiremiz
+    await asyncio.gather(
+        run_web_server(),
+        run_bot()
+    )
 
 
 if __name__ == "__main__":
