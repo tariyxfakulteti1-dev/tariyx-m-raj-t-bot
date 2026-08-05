@@ -1,6 +1,8 @@
 import sys
+import os
 import asyncio
 import logging
+from aiohttp import web
 from aiogram import Bot, Dispatcher
 from aiogram.enums import ParseMode
 from aiogram.client.default import DefaultBotProperties
@@ -15,6 +17,24 @@ from handlers.form import router as form_router
 logging.basicConfig(level=logging.INFO)
 
 
+# Render portyn ashıw ushın ápiwayı web-server
+async def handle(request):
+    return web.Response(text="Bot is running successfully!")
+
+
+async def start_web_server():
+    app = web.Application()
+    app.router.add_get("/", handle)
+    runner = web.AppRunner(app)
+    await runner.setup()
+    
+    # Render avtomat beretuǵın PORT oqıp alınadı
+    port = int(os.environ.get("PORT", 10000))
+    site = web.TCPSite(runner, "0.0.0.0", port)
+    await site.start()
+    print(f"🌐 Web-server {port}-portta iske tústi...")
+
+
 async def set_bot_commands(bot: Bot):
     commands = [
         BotCommand(command="start", description="🔄 Bottı iske túsiriw"),
@@ -22,14 +42,17 @@ async def set_bot_commands(bot: Bot):
     try:
         await bot.set_my_commands(commands)
     except Exception as e:
-        print(f"⚠️ Buyruqlardı ornatıwda qátelik ketti (Internet baylanısın tekseriń): {e}")
+        print(f"⚠️ Buyruqlardı ornatıwda qátelik ketti: {e}")
 
 
 async def main():
     if not BOT_TOKEN:
         raise ValueError("BOT_TOKEN tabılmadı! config.py faylın tekseriń.")
 
-    # Timeout mueddetin uzaytıw
+    # 1. Render portın ashıw ushın web serverdi start etemiz
+    await start_web_server()
+
+    # 2. Bot session hám dispatcher
     session = AiohttpSession(timeout=60)
 
     bot = Bot(
@@ -47,7 +70,6 @@ async def main():
 
     print("✅ Bot iske tústi...")
     
-    # Webhook'tı tozalaw waqtındaǵı tarmaq qáteligin uslap qalıw
     try:
         await bot.delete_webhook(drop_pending_updates=True)
     except TelegramNetworkError:
