@@ -1,3 +1,4 @@
+import re
 from aiogram import Router, F
 from aiogram.types import Message
 from aiogram.fsm.context import FSMContext
@@ -17,6 +18,25 @@ from keyboards.reply import (
 from handlers.start import user_data_store
 
 router = Router()
+
+# ==================== ANIQ KNOPKA MAǴLIWMATLAR DIZIMI ====================
+# Ózińizdiń reply keyboard-taǵı tuymeler atamaları penen birdey qılıp jazıń:
+VALID_DIRECTIONS = [
+    "Filosofiya", 
+    "Tariyx", 
+    "Arxeologiya", 
+    "Milliy gʻoya, maʻnaviyat asoslari va huquq taʻlimi"
+]
+
+VALID_GROUPS = [
+    "A topar", "B topar", "C topar", "D topar",
+    "1-topar", "2-topar", "3-topar", "4-topar"
+]
+
+VALID_COURSES = [
+    "1-kurs", "2-kurs", "3-kurs", "4-kurs"
+]
+
 
 # ==================== ARTQA QAYTIW LOGIKASI ====================
 @router.message(F.text == "⬅️ Artqa qaytıw")
@@ -58,11 +78,27 @@ async def go_back(message: Message, state: FSMContext):
             reply_markup=start_keyboard
         )
 
+
 # ==================== BASQISHPAN-BASQISH FORMA ====================
 
+# 1. AT-FAMILIYA QABIL ETIW HÁM VALIDATSIYA
 @router.message(AppealForm.waiting_for_name)
 async def get_name(message: Message, state: FSMContext):
-    await state.update_data(name=message.text)
+    text = message.text.strip() if message.text else ""
+    words = text.split()
+
+    # Keminde 2 sóz hám tek háriplerden turıwı kerek
+    pattern = r"^[a-zA-Zʻ’'`А-Яа-яӨөÓóÚúÁáǴǵŃńÍíƵƶ\s-]+$"
+    if len(words) < 2 or not all(re.match(pattern, w) for w in words):
+        await message.answer(
+            "⚠️ Anıq atıńız hám familiyańızdı jazıń!\n"
+            "<i>Mısalı: Allayar Ótebaev</i>",
+            parse_mode="HTML",
+            reply_markup=start_keyboard
+        )
+        return
+
+    await state.update_data(name=text)
     await state.set_state(AppealForm.waiting_for_direction)
 
     await message.answer(
@@ -70,7 +106,9 @@ async def get_name(message: Message, state: FSMContext):
         reply_markup=direction_keyboard
     )
 
-@router.message(AppealForm.waiting_for_direction)
+
+# 2. JÓNELIS SAYLAW (Tek durıs tuyme basılǵanda)
+@router.message(AppealForm.waiting_for_direction, F.text.in_(VALID_DIRECTIONS))
 async def get_direction(message: Message, state: FSMContext):
     await state.update_data(direction=message.text)
     await state.set_state(AppealForm.waiting_for_group)
@@ -80,7 +118,17 @@ async def get_direction(message: Message, state: FSMContext):
         reply_markup=group_keyboard
     )
 
-@router.message(AppealForm.waiting_for_group)
+# Jónelis durıs saylanbaǵanda:
+@router.message(AppealForm.waiting_for_direction)
+async def invalid_direction(message: Message):
+    await message.answer(
+        "⚠️ Ótinish, tómendegi tuymelerden jónelisińizdi saylań👇",
+        reply_markup=direction_keyboard
+    )
+
+
+# 3. TOPAR SAYLAW (Tek durıs tuyme basılǵanda)
+@router.message(AppealForm.waiting_for_group, F.text.in_(VALID_GROUPS))
 async def get_group(message: Message, state: FSMContext):
     await state.update_data(group=message.text)
     await state.set_state(AppealForm.waiting_for_course)
@@ -90,7 +138,17 @@ async def get_group(message: Message, state: FSMContext):
         reply_markup=course_keyboard
     )
 
-@router.message(AppealForm.waiting_for_course)
+# Topar durıs saylanbaǵanda:
+@router.message(AppealForm.waiting_for_group)
+async def invalid_group(message: Message):
+    await message.answer(
+        "⚠️ Ótinish, tómendegi tuymelerden toparıńızdı saylań👇",
+        reply_markup=group_keyboard
+    )
+
+
+# 4. KURS SAYLAW (Tek durıs tuyme basılǵanda)
+@router.message(AppealForm.waiting_for_course, F.text.in_(VALID_COURSES))
 async def get_course(message: Message, state: FSMContext):
     await state.update_data(course=message.text)
     await state.set_state(AppealForm.waiting_for_appeal)
@@ -100,9 +158,28 @@ async def get_course(message: Message, state: FSMContext):
         reply_markup=appeal_keyboard
     )
 
+# Kurs durıs saylanbaǵanda:
+@router.message(AppealForm.waiting_for_course)
+async def invalid_course(message: Message):
+    await message.answer(
+        "⚠️ Ótinish, tómendegi tuymelerden kursıńızdı saylań👇",
+        reply_markup=course_keyboard
+    )
+
+
+# 5. MÚRAJÁÁT TEKSTIN QABIL ETIW
 @router.message(AppealForm.waiting_for_appeal)
 async def get_appeal(message: Message, state: FSMContext):
-    await state.update_data(appeal=message.text)
+    text_content = message.text.strip() if message.text else ""
+
+    if len(text_content) < 5:
+        await message.answer(
+            "⚠️ Múrajáátıńızdı tolıǵıraq hám anıqroq jazıp qaldırıń!",
+            reply_markup=appeal_keyboard
+        )
+        return
+
+    await state.update_data(appeal=text_content)
     data = await state.get_data()
     user_id = message.from_user.id
 
