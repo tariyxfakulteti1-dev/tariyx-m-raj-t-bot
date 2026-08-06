@@ -20,17 +20,19 @@ from handlers.start import user_data_store
 router = Router()
 
 # ==================== ANIQ KNOPKA MAǴLIWMATLAR DIZIMI ====================
-# Ózińizdiń reply keyboard-taǵı tuymeler atamaları penen birdey qılıp jazıń:
 VALID_DIRECTIONS = [
-    "Filosofiya", 
     "Tariyx", 
+    "Sociologiya", 
     "Arxeologiya", 
-    "Milliy gʻoya, maʻnaviyat asoslari va huquq taʻlimi"
+    "Filosofiya"
 ]
 
 VALID_GROUPS = [
-    "A topar", "B topar", "C topar", "D topar",
-    "1-topar", "2-topar", "3-topar", "4-topar"
+    "A topar", 
+    "B topar", 
+    "C topar", 
+    "G topar", 
+    "V topar"
 ]
 
 VALID_COURSES = [
@@ -91,8 +93,8 @@ async def get_name(message: Message, state: FSMContext):
     pattern = r"^[a-zA-Zʻ’'`А-Яа-яӨөÓóÚúÁáǴǵŃńÍíƵƶ\s-]+$"
     if len(words) < 2 or not all(re.match(pattern, w) for w in words):
         await message.answer(
-            "⚠️ Anıq atıńız hám familiyańızdı jazıń!\n"
-            "<i>Mısalı: Allayar Ótebaev</i>",
+            "⚠️ Atıńız hám familiyańızdı jazıń!\n"
+            "<i>Mısalı: Boranbaev Allayar</i>",
             parse_mode="HTML",
             reply_markup=start_keyboard
         )
@@ -107,7 +109,7 @@ async def get_name(message: Message, state: FSMContext):
     )
 
 
-# 2. JÓNELIS SAYLAW (Tek durıs tuyme basılǵanda)
+# 2. JÓNELIS SAYLAW (Tek durıs túyme basılǵanda)
 @router.message(AppealForm.waiting_for_direction, F.text.in_(VALID_DIRECTIONS))
 async def get_direction(message: Message, state: FSMContext):
     await state.update_data(direction=message.text)
@@ -122,12 +124,12 @@ async def get_direction(message: Message, state: FSMContext):
 @router.message(AppealForm.waiting_for_direction)
 async def invalid_direction(message: Message):
     await message.answer(
-        "⚠️ Ótinish, tómendegi tuymelerden jónelisińizdi saylań👇",
+        "⚠️ Ótinish, tómendegi túymelerden jónelisińizdi saylań👇",
         reply_markup=direction_keyboard
     )
 
 
-# 3. TOPAR SAYLAW (Tek durıs tuyme basılǵanda)
+# 3. TOPAR SAYLAW (Tek durıs túyme basılǵanda)
 @router.message(AppealForm.waiting_for_group, F.text.in_(VALID_GROUPS))
 async def get_group(message: Message, state: FSMContext):
     await state.update_data(group=message.text)
@@ -142,12 +144,12 @@ async def get_group(message: Message, state: FSMContext):
 @router.message(AppealForm.waiting_for_group)
 async def invalid_group(message: Message):
     await message.answer(
-        "⚠️ Ótinish, tómendegi tuymelerden toparıńızdı saylań👇",
+        "⚠️ Ótinish, tómendegi túymelerden toparıńızdı saylań👇",
         reply_markup=group_keyboard
     )
 
 
-# 4. KURS SAYLAW (Tek durıs tuyme basılǵanda)
+# 4. KURS SAYLAW (Tek durıs túyme basılǵanda)
 @router.message(AppealForm.waiting_for_course, F.text.in_(VALID_COURSES))
 async def get_course(message: Message, state: FSMContext):
     await state.update_data(course=message.text)
@@ -162,7 +164,7 @@ async def get_course(message: Message, state: FSMContext):
 @router.message(AppealForm.waiting_for_course)
 async def invalid_course(message: Message):
     await message.answer(
-        "⚠️ Ótinish, tómendegi tuymelerden kursıńızdı saylań👇",
+        "⚠️ Ótinish, tómendegi túymelerden kursıńızdı saylań👇",
         reply_markup=course_keyboard
     )
 
@@ -183,7 +185,7 @@ async def get_appeal(message: Message, state: FSMContext):
     data = await state.get_data()
     user_id = message.from_user.id
 
-    # Paydalanıwshı maǵlıwmatların keyingi safar ushın saqlap qoyamyz
+    # Paydalanıwshı maǵlıwmatların saqlaw
     user_data_store[user_id] = {
         'name': data.get('name'),
         'direction': data.get('direction'),
