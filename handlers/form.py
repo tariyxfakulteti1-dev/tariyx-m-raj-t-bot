@@ -173,10 +173,13 @@ async def invalid_course(message: Message):
 @router.message(AppealForm.waiting_for_appeal)
 async def get_appeal(message: Message, state: FSMContext):
     text_content = message.text.strip() if message.text else ""
+    words = text_content.split()
 
-    if len(text_content) < 5:
+    # Múrájat tekseriwı: eń keminde 15 simvol, keminde 2 so'z hám bir árip 5-ten artıq qaytalanbawı kerek
+    if len(text_content) < 15 or len(words) < 2 or re.search(r"(.)\1{5,}", text_content):
         await message.answer(
-            "⚠️ Múrajáátıńızdı tolıǵıraq jazıp qaldırıń!",
+            "⚠️ Múrájáátıńız júdá qısqa!\n"
+            "Iltimas, mashqala yamasa usınısıńızdı tolıǵıraq etip jazıp qaldırıń😊",
             reply_markup=appeal_keyboard
         )
         return
