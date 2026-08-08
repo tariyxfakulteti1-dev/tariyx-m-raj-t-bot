@@ -176,7 +176,7 @@ async def get_appeal(message: Message, state: FSMContext):
 
     if len(text_content) < 5:
         await message.answer(
-            "⚠️ Múrajáátıńızdı tolıǵıraq hám anıqroq jazıp qaldırıń!",
+            "⚠️ Múrajáátıńızdı tolıǵıraq jazıp qaldırıń!",
             reply_markup=appeal_keyboard
         )
         return
