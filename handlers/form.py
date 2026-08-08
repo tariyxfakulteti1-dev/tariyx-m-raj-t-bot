@@ -89,9 +89,25 @@ async def get_name(message: Message, state: FSMContext):
     text = message.text.strip() if message.text else ""
     words = text.split()
 
-    # Keminde 2 sóz hám tek háriplerden turıwı kerek
-    pattern = r"^[a-zA-Zʻ’'`А-Яа-яӨөÓóÚúÁáǴǵŃńÍíƵƶ\s-]+$"
-    if len(words) < 2 or not all(re.match(pattern, w) for w in words):
+    # Tek háripler hám defis/apostroflardan turıwı shart
+    letters_pattern = r"^[a-zA-Zʻ’'`А-Яа-яӨөÓóÚúÁáǴǵŃńÍíƵƶ\s-]+$"
+    all_valid_letters = all(re.match(letters_pattern, w) for w in words)
+
+    # Familiya qosımshaların tekseriw (-ev, -eva, -ov, -ova, -v, -va)
+    surname_pattern = r"(?i).+(ev|eva|ov|ova|v|va)$"
+    has_valid_surname = any(re.match(surname_pattern, w) for w in words)
+
+    # Validation:
+    # 1. Keminde 2 sóz bolıwı shart.
+    # 2. Tek háriplerden turıwı shart.
+    # 3. Yá -ev/-ov qosımshası bolıwı kerek, YÁKI hár bir sóz keminde 3 simvoldan ibarat bolıwı kerek.
+    is_valid_structure = (
+        len(words) >= 2 
+        and all_valid_letters 
+        and (has_valid_surname or all(len(w) >= 3 for w in words))
+    )
+
+    if not is_valid_structure:
         await message.answer(
             "⚠️ Atıńız hám familiyańızdı jazıń!\n"
             "<i>Mısalı: Boranbaev Allayar</i>",
