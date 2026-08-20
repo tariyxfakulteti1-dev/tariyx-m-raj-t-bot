@@ -12,6 +12,15 @@ start_keyboard = ReplyKeyboardMarkup(
     resize_keyboard=True
 )
 
+# Jańa: Telefon nomerin soraw klaviaturası
+phone_keyboard = ReplyKeyboardMarkup(
+    keyboard=[
+        [KeyboardButton(text="📱 Telefon nomerdi jiberiw", request_contact=True)],
+        *nav_buttons
+    ],
+    resize_keyboard=True
+)
+
 # 2-basqısh: Jónelis klaviaturası (Tariyx, Sociologiya, Arxeologiya, Filosofiya)
 direction_keyboard = ReplyKeyboardMarkup(
     keyboard=[
