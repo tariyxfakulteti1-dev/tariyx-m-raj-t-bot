@@ -33,9 +33,10 @@ async def new_appeal_handler(message: Message, state: FSMContext):
         saved_data = user_data_store[user_id]
         await state.clear()
         
-        # Aldınǵı maǵlıwmatlardı FSM memory-ǵa qayta júkleymiz
+        # Aldınǵı maǵlıwmatlardı FSM memory-ǵa qayta júkleymiz (telefon nomeri qosıldı)
         await state.update_data(
             name=saved_data['name'],
+            phone=saved_data.get('phone'),
             direction=saved_data['direction'],
             group=saved_data['group'],
             course=saved_data['course']
@@ -44,6 +45,7 @@ async def new_appeal_handler(message: Message, state: FSMContext):
 
         await message.answer(
             f"👤 <b>{saved_data['name']}</b>\n"
+            f"📱 {saved_data.get('phone', 'Nomer joq')}\n"
             f"🏛 {saved_data['direction']} | {saved_data['group']} | {saved_data['course']}\n\n"
             "Tariyx fakultetine baylanıslı bolǵan jańa múrajáátıńızdı tolıq jazıp qaldırıń😊",
             reply_markup=appeal_keyboard,
