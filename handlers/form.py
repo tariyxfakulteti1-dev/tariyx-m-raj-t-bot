@@ -7,6 +7,7 @@ from config import CHANNEL_ID
 from states.form import AppealForm
 from keyboards.reply import (
     start_keyboard,
+    phone_keyboard,
     direction_keyboard,
     group_keyboard,
     course_keyboard,
@@ -45,11 +46,18 @@ VALID_COURSES = [
 async def go_back(message: Message, state: FSMContext):
     current_state = await state.get_state()
 
-    if current_state == AppealForm.waiting_for_direction.state:
+    if current_state == AppealForm.waiting_for_phone.state:
         await state.set_state(AppealForm.waiting_for_name)
         await message.answer(
             "Atı familiyańızdı qaytadan jazıp qaldırıń 😊",
             reply_markup=start_keyboard
+        )
+
+    elif current_state == AppealForm.waiting_for_direction.state:
+        await state.set_state(AppealForm.waiting_for_phone)
+        await message.answer(
+            "📱 Telefon nomerińizdi jiberiń yamasa jazıp qaldırıń👇",
+            reply_markup=phone_keyboard
         )
 
     elif current_state == AppealForm.waiting_for_group.state:
@@ -89,25 +97,9 @@ async def get_name(message: Message, state: FSMContext):
     text = message.text.strip() if message.text else ""
     words = text.split()
 
-    # Tek háripler hám defis/apostroflardan turıwı shart
-    letters_pattern = r"^[a-zA-Zʻ’'`А-Яа-яӨөÓóÚúÁáǴǵŃńÍíƵƶ\s-]+$"
-    all_valid_letters = all(re.match(letters_pattern, w) for w in words)
-
-    # Familiya qosımshaların tekseriw (-ev, -eva, -ov, -ova, -v, -va)
-    surname_pattern = r"(?i).+(ev|eva|ov|ova|v|va)$"
-    has_valid_surname = any(re.match(surname_pattern, w) for w in words)
-
-    # Validation:
-    # 1. Keminde 2 sóz bolıwı shart.
-    # 2. Tek háriplerden turıwı shart.
-    # 3. Yá -ev/-ov qosımshası bolıwı kerek, YÁKI hár bir sóz keminde 3 simvoldan ibarat bolıwı kerek.
-    is_valid_structure = (
-        len(words) >= 2 
-        and all_valid_letters 
-        and (has_valid_surname or all(len(w) >= 3 for w in words))
-    )
-
-    if not is_valid_structure:
+    # Keminde 2 sóz hám tek háriplerden turıwı kerek
+    pattern = r"^[a-zA-Zʻ’'`А-Яа-яӨөÓóÚúÁáǴǵŃńÍíƵƶ\s-]+$"
+    if len(words) < 2 or not all(re.match(pattern, w) for w in words):
         await message.answer(
             "⚠️ Atıńız hám familiyańızdı jazıń!\n"
             "<i>Mısalı: Boranbaev Allayar</i>",
@@ -117,6 +109,31 @@ async def get_name(message: Message, state: FSMContext):
         return
 
     await state.update_data(name=text)
+    await state.set_state(AppealForm.waiting_for_phone)
+
+    await message.answer(
+        "📱 Telefon nomerińizdi jiberiw ushın tómendegi túymeni basıń yamasa nomerińizdi jazıp jiberiń👇",
+        reply_markup=phone_keyboard
+    )
+
+
+# 1.5. TELEFON NOMERIN QABIL ETIW (Contact túymesi yamasa Tekst túrinde)
+@router.message(AppealForm.waiting_for_phone)
+async def get_phone(message: Message, state: FSMContext):
+    if message.contact:
+        phone_number = message.contact.phone_number
+        if not phone_number.startswith("+"):
+            phone_number = f"+{phone_number}"
+    elif message.text:
+        phone_number = message.text.strip()
+    else:
+        await message.answer(
+            "⚠️ Ótinish, telefon nomerińizdi knopkanı basıw arqalı jiberiń yamasa tekst túrinde jazıń!",
+            reply_markup=phone_keyboard
+        )
+        return
+
+    await state.update_data(phone=phone_number)
     await state.set_state(AppealForm.waiting_for_direction)
 
     await message.answer(
@@ -189,13 +206,10 @@ async def invalid_course(message: Message):
 @router.message(AppealForm.waiting_for_appeal)
 async def get_appeal(message: Message, state: FSMContext):
     text_content = message.text.strip() if message.text else ""
-    words = text_content.split()
 
-    # Múrájat tekseriwı: eń keminde 15 simvol, keminde 2 so'z hám bir árip 5-ten artıq qaytalanbawı kerek
-    if len(text_content) < 15 or len(words) < 2 or re.search(r"(.)\1{5,}", text_content):
+    if len(text_content) < 5:
         await message.answer(
-            "⚠️ Múrájáátıńız júdá qısqa!\n"
-            "Iltimas, mashqala yamasa usınısıńızdı tolıǵıraq etip jazıp qaldırıń😊",
+            "⚠️ Múrajáátıńızdı tolıǵıraq jazıp qaldırıń!",
             reply_markup=appeal_keyboard
         )
         return
@@ -207,6 +221,7 @@ async def get_appeal(message: Message, state: FSMContext):
     # Paydalanıwshı maǵlıwmatların saqlaw
     user_data_store[user_id] = {
         'name': data.get('name'),
+        'phone': data.get('phone'),
         'direction': data.get('direction'),
         'group': data.get('group'),
         'course': data.get('course')
@@ -215,6 +230,7 @@ async def get_appeal(message: Message, state: FSMContext):
     # Terminalǵa shıǵarıw
     print("===== JAŃA MÚRAJÁÁT =====")
     print(f"Atı-familiyası: {data.get('name')}")
+    print(f"Telefon nomeri: {data.get('phone')}")
     print(f"Jónelisi: {data.get('direction')}")
     print(f"Toparı: {data.get('group')}")
     print(f"Kursı: {data.get('course')}")
@@ -225,6 +241,7 @@ async def get_appeal(message: Message, state: FSMContext):
     text = (
         "📨 <b>JAŃA MÚRAJÁÁT</b>\n\n"
         f"👤 <b>Atı-familiyası:</b> {data.get('name')}\n"
+        f"📱 <b>Telefon nomeri:</b> {data.get('phone')}\n"
         f"🏛 <b>Jónelisi:</b> {data.get('direction')}\n"
         f"👥 <b>Toparı:</b> {data.get('group')}\n"
         f"🎓 <b>Kursı:</b> {data.get('course')}\n\n"
