@@ -1,6 +1,6 @@
 import re
 from aiogram import Router, F
-from aiogram.types import Message, ReplyKeyboardRemove
+from aiogram.types import Message
 from aiogram.fsm.context import FSMContext
 
 from config import CHANNEL_ID
@@ -117,15 +117,33 @@ async def get_name(message: Message, state: FSMContext):
     )
 
 
-# 1.5. TELEFON NOMERIN QABIL ETIW (Contact túymesi yamasa Tekst túrinde)
-@router.message(AppealForm.waiting_for_phone, F.contact | F.text)
+# 1.5. TELEFON NOMERIN QABIL ETIW HÁM TEKSERIW (VALIDATION)
+@router.message(AppealForm.waiting_for_phone)
 async def get_phone(message: Message, state: FSMContext):
+    phone_number = None
+
     if message.contact:
         phone_number = message.contact.phone_number
         if not phone_number.startswith("+"):
             phone_number = f"+{phone_number}"
+            
     elif message.text and message.text != "⬅️ Artqa qaytıw":
-        phone_number = message.text.strip()
+        raw_text = message.text.strip()
+        # Nomerdi tekseriw: basında optional +, keyin 9 yaki 12 dana cifr
+        # Mısalı: 901234567, 998901234567, +998901234567
+        phone_pattern = r"^\+?\d{9,12}$"
+        
+        if re.match(phone_pattern, raw_text):
+            phone_number = raw_text if raw_text.startswith("+") else f"+{raw_text}"
+        else:
+            await message.answer(
+                "⚠️ Qáte telefon nomer kiritildi!\n"
+                "Nomer 9-dan 12-ge shekem cifrdan turıwı kerek.\n"
+                "<i>Mısalı: +998901234567 yamasa 901234567</i>",
+                parse_mode="HTML",
+                reply_markup=phone_keyboard
+            )
+            return
     else:
         await message.answer(
             "⚠️ Ótinish, telefon nomerińizdi knopkanı basıw arqalı jiberiń yamasa tekst túrinde jazıń!",
