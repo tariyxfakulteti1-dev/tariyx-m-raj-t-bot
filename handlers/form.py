@@ -137,9 +137,8 @@ async def get_phone(message: Message, state: FSMContext):
             phone_number = raw_text if raw_text.startswith("+") else f"+{raw_text}"
         else:
             await message.answer(
-                "⚠️ Qáte telefon nomer kiritildi!\n"
-                "Nomer 9-dan 12-ge shekem cifrdan turıwı kerek.\n"
-                "<i>Mısalı: +998901234567 yamasa 901234567</i>",
+                "⚠️ Telefon nomer nadurıs kiritildi\n"
+                "Tekserip qaytadan kiritiń!\n"
                 parse_mode="HTML",
                 reply_markup=phone_keyboard
             )
