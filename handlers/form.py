@@ -1,6 +1,6 @@
 import re
 from aiogram import Router, F
-from aiogram.types import Message
+from aiogram.types import Message, ReplyKeyboardRemove
 from aiogram.fsm.context import FSMContext
 
 from config import CHANNEL_ID
@@ -118,13 +118,13 @@ async def get_name(message: Message, state: FSMContext):
 
 
 # 1.5. TELEFON NOMERIN QABIL ETIW (Contact túymesi yamasa Tekst túrinde)
-@router.message(AppealForm.waiting_for_phone)
+@router.message(AppealForm.waiting_for_phone, F.contact | F.text)
 async def get_phone(message: Message, state: FSMContext):
     if message.contact:
         phone_number = message.contact.phone_number
         if not phone_number.startswith("+"):
             phone_number = f"+{phone_number}"
-    elif message.text:
+    elif message.text and message.text != "⬅️ Artqa qaytıw":
         phone_number = message.text.strip()
     else:
         await message.answer(
