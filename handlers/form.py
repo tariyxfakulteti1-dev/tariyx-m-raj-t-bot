@@ -219,18 +219,26 @@ async def invalid_course(message: Message):
     )
 
 
-# 5. MÚRAJÁÁT TEKSTIN QABIL ETIW
+# 5. MÚRAJÁÁT TEKSTIN QABIL ETIW (3 sóz hám 10 hárip shárti menen)
 @router.message(AppealForm.waiting_for_appeal)
 async def get_appeal(message: Message, state: FSMContext):
     text_content = message.text.strip() if message.text else ""
 
-    if len(text_content) < 5:
+    # Teksttegi sózler dizimin alamız
+    words = text_content.split()
+    
+    # Teksttegi tek háripler sanın esaplaymız (bos orınlar hám simvollarsız)
+    letters_only = re.sub(r'[^a-zA-ZáóúıǵńÁÓÚİǴŃа-яА-ЯөөӨӨ]', '', text_content)
+
+    # 1. Keminde 3 sóz hám keminde 10 hárip shártin tekseremiz
+    if len(words) < 3 or len(letters_only) < 10:
         await message.answer(
             "⚠️ Múrajáátıńızdı tolıǵıraq jazıp qaldırıń!",
             reply_markup=appeal_keyboard
         )
         return
-
+        
+    # Shártler orınlansa, saqlaw hám jiberiw:
     await state.update_data(appeal=text_content)
     data = await state.get_data()
     user_id = message.from_user.id
@@ -243,16 +251,6 @@ async def get_appeal(message: Message, state: FSMContext):
         'group': data.get('group'),
         'course': data.get('course')
     }
-
-    # Terminalǵa shıǵarıw
-    print("===== JAŃA MÚRAJÁÁT =====")
-    print(f"Atı-familiyası: {data.get('name')}")
-    print(f"Telefon nomeri: {data.get('phone')}")
-    print(f"Jónelisi: {data.get('direction')}")
-    print(f"Toparı: {data.get('group')}")
-    print(f"Kursı: {data.get('course')}")
-    print(f"Múrajáátı: {data.get('appeal')}")
-    print("=========================")
 
     # Kanalǵa jiberiw
     text = (
