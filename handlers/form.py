@@ -233,7 +233,7 @@ async def get_appeal(message: Message, state: FSMContext):
     # 1. Keminde 3 sóz hám keminde 10 hárip shártin tekseremiz
     if len(words) < 3 or len(letters_only) < 10:
         await message.answer(
-            "⚠️ Múrajáátıńızdı tolıǵıraq jazıp qaldırıń!",
+            "⚠️ Múrajáátıńızdı anıq hám túsinikli etip jazıp qaldırıń!",
             reply_markup=appeal_keyboard
         )
         return
