@@ -219,36 +219,37 @@ async def invalid_course(message: Message):
     )
 
 
-# 5. MÚRAJÁÁT TEKSTIN QABIL ETIW (Mánisiz háripler hám tákrarlaıwlar filtrı menen)
+# 5. MÚRAJÁÁT TEKSTIN QABIL ETIW (3 sóz, 10 hárip hám hár sózde dawıslı hárip shárti)
 @router.message(AppealForm.waiting_for_appeal)
 async def get_appeal(message: Message, state: FSMContext):
     text_content = message.text.strip() if message.text else ""
 
-    # 1. Izbe-iz 3 yamasa ondan kóp birdey háripler qaytalanıwın tekseriw (mısalı: nnnn, mmmm, jjjj)
-    if re.search(r'(.)\1{2,}', text_content, re.IGNORECASE):
-        await message.answer(
-            "⚠️ Nadurıs múrajáát kiritildi!\n\n"
-            "Mánisiz háripler tákrarlańǵan tekstler qabıllanmaydı.",
-            reply_markup=appeal_keyboard
-        )
-        return
-
     # Teksttegi sózler dizimin alamız
     words = text_content.split()
     
-    # Teksttegi tek háripler sanın esaplaymız (bos orınlar hám tinis belgilerisiz)
+    # Teksttegi tek háripler sanın esaplaymız
     letters_only = re.sub(r'[^a-zA-ZáóúıǵńÁÓÚİǴŃа-яА-ЯөөӨӨ]', '', text_content)
 
-    # Keminde 2 háripten turatuǵın mánili sózlerdi esaplaymız
-    valid_words = [w for w in words if len(re.sub(r'[^a-zA-ZáóúıǵńÁÓÚİǴŃа-яА-ЯөөӨӨ]', '', w)) >= 2]
+    # Karakalpak hám Kirill dawıslı háripleri
+    vowels_pattern = r'[aáeuúioóıAÁEUÚIOÓIаеёиоуыэюяАЕЁИОУЫЭЮЯ]'
 
-    # 2. Keminde 3 mánili sóz hám 10 hárip shártin tekseremiz
+    # 1. Keminde 3 sóz hám 10 hárip shártin tekseremiz
     if len(words) < 3 or len(letters_only) < 10:
         await message.answer(
             "⚠️ Múrajáátıńızdı anıq hám túsinikli etip jazıp qaldırıń!",
             reply_markup=appeal_keyboard
         )
         return
+
+    # 2. Hár bir sóz ishinde keminde 1 dawıslı hárip bolıwın tekseremiz
+    for word in words:
+        if not re.search(vowels_pattern, word):
+            await message.answer(
+                "⚠️ Nadurıs múrajáát kiritildi!\n\n"
+                "Múrajááttaǵı hár bir sózde keminde 1 dawıslı hárip (a, á, e, u, ú, i, o, ó, ı) bolıwı kerek.",
+                reply_markup=appeal_keyboard
+            )
+            return
 
     # Shártler tolıq orınlansa, saqlaw hám jiberiw:
     await state.update_data(appeal=text_content)
