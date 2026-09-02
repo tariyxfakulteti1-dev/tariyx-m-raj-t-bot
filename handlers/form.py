@@ -129,8 +129,6 @@ async def get_phone(message: Message, state: FSMContext):
             
     elif message.text and message.text != "⬅️ Artqa qaytıw":
         raw_text = message.text.strip()
-        # Nomerdi tekseriw: basında optional +, keyin 9 yaki 12 dana cifr
-        # Mısalı: 901234567, 998901234567, +998901234567
         phone_pattern = r"^\+?\d{9,12}$"
         
         if re.match(phone_pattern, raw_text):
@@ -170,7 +168,6 @@ async def get_direction(message: Message, state: FSMContext):
         reply_markup=group_keyboard
     )
 
-# Jónelis durıs saylanbaǵanda:
 @router.message(AppealForm.waiting_for_direction)
 async def invalid_direction(message: Message):
     await message.answer(
@@ -190,7 +187,6 @@ async def get_group(message: Message, state: FSMContext):
         reply_markup=course_keyboard
     )
 
-# Topar durıs saylanbaǵanda:
 @router.message(AppealForm.waiting_for_group)
 async def invalid_group(message: Message):
     await message.answer(
@@ -210,7 +206,6 @@ async def get_course(message: Message, state: FSMContext):
         reply_markup=appeal_keyboard
     )
 
-# Kurs durıs saylanbaǵanda:
 @router.message(AppealForm.waiting_for_course)
 async def invalid_course(message: Message):
     await message.answer(
@@ -224,24 +219,17 @@ async def invalid_course(message: Message):
 async def get_appeal(message: Message, state: FSMContext):
     text_content = message.text.strip() if message.text else ""
 
-    # Teksttegi sózler dizimin alamız
     words = text_content.split()
-    
-    # Teksttegi tek háripler sanın esaplaymız
     letters_only = re.sub(r'[^a-zA-ZáóúıǵńÁÓÚİǴŃа-яА-ЯөөӨӨ]', '', text_content)
-
-    # Karakalpak hám Kirill dawıslı háripleri
     vowels_pattern = r'[aáeuúioóıAÁEUÚIOÓIаеёиоуыэюяАЕЁИОУЫЭЮЯ]'
 
-    # 1. Keminde 3 sóz hám 10 hárip shártin tekseremiz
     if len(words) < 3 or len(letters_only) < 10:
-        await message.answer(
-            "⚠️ Múrajáátıńızdı anıq hám túsinikli etip jazıp qaldırıń!",
-            reply_markup=appeal_keyboard
-        )
-        return
+        await message.answer(
+            "⚠️ Múrajáátıńızdı anıq hám túsinikli etip jazıp qaldırıń!",
+            reply_markup=appeal_keyboard
+        )
+        return
 
-    # 2. Hár bir sóz ishinde keminde 1 dawıslı hárip bolıwın tekseremiz
     for word in words:
         if not re.search(vowels_pattern, word):
             await message.answer(
@@ -251,12 +239,10 @@ async def get_appeal(message: Message, state: FSMContext):
             )
             return
 
-    # Shártler tolıq orınlansa, saqlaw hám jiberiw:
     await state.update_data(appeal=text_content)
     data = await state.get_data()
     user_id = message.from_user.id
 
-    # Paydalanıwshı maǵlıwmatların saqlaw
     user_data_store[user_id] = {
         'name': data.get('name'),
         'phone': data.get('phone'),
@@ -265,7 +251,6 @@ async def get_appeal(message: Message, state: FSMContext):
         'course': data.get('course')
     }
 
-    # Kanalǵa jiberiw
     text = (
         "📨 <b>JAŃA MÚRAJÁÁT</b>\n\n"
         f"👤 <b>Atı-familiyası:</b> {data.get('name')}\n"
